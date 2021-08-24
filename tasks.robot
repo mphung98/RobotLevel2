@@ -34,7 +34,7 @@ ${ButtonOrder}      xpath=//button[@id="order"]
 ${ButtonOAnother}   xpath=//button[@id="order-another"]
 ${RetryMount}=                  5x
 ${RetryInterval}=               0.5s
-
+${logout}           xpath=//button[@id="logout"]
 
 *** Keywords ***
 Open the robot website
@@ -94,7 +94,7 @@ Submit The Order and Checking until Success
     Run Keyword If    ${present}    Submit The Order and Checking until Success
 
 Get Receipt
-    ${receipt_results_html}=        Get Element Attribute    ${Receipt}       outerHTML
+    ${receipt_results_html}=        Get Element Attribute        ${Receipt}       outerHTML
     [Return]                        ${receipt_results_html}
 Store the receipt as a PDF file
     [Documentation]  Store the PDF.
@@ -124,8 +124,8 @@ Take a screenshot of the robot
 Embed the robot screenshot to the receipt PDF file    
     [Documentation]       Open current PDF (strored at keyword: Store the receipt as a PDF file) 
     ...                   and add robot at (Take a screenshot of the robot) to PDF then save with diffence name.
-    [Arguments]           ${pdf}        ${OrderNumber}
-    ${receiptPDF}=        Open Pdf    ${pdf}
+    [Arguments]           ${pdf}           ${OrderNumber}
+    ${receiptPDF}=        Open Pdf         ${pdf}
     ${files}=             Create List      ${pdf}        ${DOWNLOAD_DIR}${/}Robot_${OrderNumber}.JPEG 
     Add Files To Pdf      ${files}    ${CURDIR}${/}output${/}receipt${/}Robot_Order${OrderNumber}.pdf    
     Close Pdf             ${pdf}
@@ -148,12 +148,18 @@ Process order
     Close the annoying modal
     Fill the form     ${order}
     Preview the robot
-    Wait Until Keyword Succeeds    ${RetryMount}     ${RetryInterval}     Submit the order
-    ${pdf}=    Store the receipt as a PDF file       ${order}[Order number]
-    ${screenshot}=    Take a screenshot of the robot     ${order}[Order number]
+    Wait Until Keyword Succeeds    ${RetryMount}          ${RetryInterval}     Submit the order
+    ${pdf}=    Store the receipt as a PDF file            ${order}[Order number]
+    ${screenshot}=    Take a screenshot of the robot      ${order}[Order number]
     Embed the robot screenshot to the receipt PDF file    ${pdf}     ${order}[Order number]
     Go to order another robot
 
+Log Out And Close The Browser
+    Close the annoying modal
+    ${isLogoutVisible}=       Run Keyword And Return Status     Element Should Be Visible   ${logout}      
+    Run Keyword If            ${isLogoutVisible}                Click Button                ${logout}
+    Close Browser
+    
 *** Tasks ***
 Order robots form RobotSpareBin Industries Inc
     Create Directory    ${DOWNLOAD_DIR}
@@ -167,5 +173,5 @@ Order robots form RobotSpareBin Industries Inc
     END
     Create a ZIP file of the receipts
     Remove Directory        ${DOWNLOAD_DIR}    recursive=True 
-
+    [Teardown]    Log Out And Close The Browser
 
