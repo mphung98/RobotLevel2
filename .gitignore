@@ -22,3 +22,5 @@ output/receipts.zip
 log.html
 output.xml
 report.html
+.ipynb_checkpoints/tasks-checkpoint.robot
+.virtual_documents/tasks.robot

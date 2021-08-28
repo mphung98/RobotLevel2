@@ -12,6 +12,7 @@ Library         String
 Library         RPA.PDF                   # PDF functions 
 Library         RPA.Archive               # Zip file
 Library         RPA.Robocloud.Secrets
+Library         RPA.Dialogs
 Suite Setup     Open the robot website
 
 *** Variables ***
@@ -46,24 +47,39 @@ Open the robot website
     Input Password        id:password    ${secret}[password]
     Submit Form
     Wait Until Page Contains Element    id:sales-form
-    
+
 Open the robot order website
     Click Element    xpath=//a[@class="nav-link"]
     Close the annoying modal
- 
+
 
 Get Order By CSV
     [Documentation]    Download CSV file then read data from that file.
     ...                Return a list item of CSV file without header.
+    # Input the CSV URL
+    ${csvOnline}=       Provide CSV URL
+    ${length}=    Get Length    ${Portfolio_ste}
+    Log To Console      ${length}
+    
+    
     Download            ${CSVFile}                  ${DOWNLOAD_DIR}        overwrite=True
     ${orders}=          Read table from CSV         ${DOWNLOAD_DIR}${/}orders.csv
     [Return]            ${orders}
 
 
+# +
+Provide CSV URL
+    Add heading    Download CSV
+    Add text input    url    label=CSV URL
+    ${response}=    Run dialog
+    Log To Console    ${response.url}
+        
+    
 Close the annoying modal
     [Documentation]    If the modal dialog is open then closed it.
     ${isDialogVisible}=       Run Keyword And Return Status     Element Should Be Visible   ${Dialog}      
     Run Keyword If            ${isDialogVisible}                Click Button                ${ButtonOK} 
+# -
 
 Fill the form    
     [Documentation]        Fill data to controls in form
@@ -78,7 +94,7 @@ Fill the form
 Preview the robot     
     Click Element When Visible        ${Review} 
     Wait Until Element Is Visible     ${RobotReview}
-    
+
 
 Submit the order
     Click Button            ${ButtonOrder} 
@@ -159,19 +175,20 @@ Log Out And Close The Browser
     ${isLogoutVisible}=       Run Keyword And Return Status     Element Should Be Visible   ${logout}      
     Run Keyword If            ${isLogoutVisible}                Click Button                ${logout}
     Close Browser
-    
+
 *** Tasks ***
 Order robots form RobotSpareBin Industries Inc
-    Create Directory    ${DOWNLOAD_DIR}
-    Set Download Directory     ${DOWNLOAD_DIR}
-    Create Directory           ${CURDIR}${/}output${/}receipt
-    Open the robot order website
-    ${orders}=    Get Order By CSV
+    Provide CSV URL
+    #Create Directory    ${DOWNLOAD_DIR}
+    #Set Download Directory     ${DOWNLOAD_DIR}
+    #Create Directory           ${CURDIR}${/}output${/}receipt
+    #Open the robot order website
+    #${orders}=    Get Order By CSV
    
-    FOR    ${row}   IN      @{orders}
-        Run Keyword And Continue On Failure    Process order    ${row}
-    END
-    Create a ZIP file of the receipts
-    Remove Directory        ${DOWNLOAD_DIR}    recursive=True 
-    [Teardown]    Log Out And Close The Browser
+    #FOR    ${row}   IN      @{orders}
+    #    Run Keyword And Continue On Failure    Process order    ${row}
+    #END
+    #Create a ZIP file of the receipts
+    #Remove Directory        ${DOWNLOAD_DIR}    recursive=True 
+    #[Teardown]    Log Out And Close The Browser
 
