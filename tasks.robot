@@ -12,7 +12,9 @@ Library         String
 Library         RPA.PDF                   # PDF functions 
 Library         RPA.Archive               # Zip file
 Library         RPA.Robocloud.Secrets
-Library         RPA.Dialogs
+Library         Dialogs
+Library         RPA.FileSystem
+
 Suite Setup     Open the robot website
 
 *** Variables ***
@@ -57,22 +59,14 @@ Get Order By CSV
     [Documentation]    Download CSV file then read data from that file.
     ...                Return a list item of CSV file without header.
     # Input the CSV URL
-    ${csvOnline}=       Provide CSV URL
-    ${length}=    Get Length    ${Portfolio_ste}
-    Log To Console      ${length}
-    
-    
-    Download            ${CSVFile}                  ${DOWNLOAD_DIR}        overwrite=True
-    ${orders}=          Read table from CSV         ${DOWNLOAD_DIR}${/}orders.csv
+    ${csvOnline}=       Get Value From User    "Please provide CSV's URL:"    ${CSVFile}
+    ${length}=          Get Length    ${csvOnline}
+    Download            ${csvOnline}                  ${DOWNLOAD_DIR}        overwrite=True
+    ${orders}=          Run Keyword If File Exists    ${DOWNLOAD_DIR}${/}orders.csv            Read CSV 
     [Return]            ${orders}
-
-
-# +
-Provide CSV URL
-    Add heading    Download CSV
-    Add text input    url    label=CSV URL
-    ${response}=    Run dialog
-    Log To Console    ${response.url}
+ Read CSV 
+     ${orders}=          Read table from CSV         ${DOWNLOAD_DIR}${/}orders.csv
+     [Return]            ${orders}
         
     
 Close the annoying modal
@@ -152,7 +146,7 @@ Embed the robot screenshot to the receipt PDF file
 Create a ZIP file of the receipts     
     [Documentation]    Add all receipt files to a zip found.
     Archive Folder With Zip     ${CURDIR}${/}output${/}receipt      ${CURDIR}${/}output${/}receipts.zip   recursive=True  include=*.pdf  
-    Remove Directory            ${CURDIR}${/}output${/}receipt      recursive=True 
+    OperatingSystem.Remove Directory            ${CURDIR}${/}output${/}receipt      recursive=True 
 
 Process order
     [Documentation]        Close dialog then fill data in to the form, review the robot then submit the order.
@@ -178,17 +172,17 @@ Log Out And Close The Browser
 
 *** Tasks ***
 Order robots form RobotSpareBin Industries Inc
-    Provide CSV URL
-    #Create Directory    ${DOWNLOAD_DIR}
-    #Set Download Directory     ${DOWNLOAD_DIR}
-    #Create Directory           ${CURDIR}${/}output${/}receipt
-    #Open the robot order website
-    #${orders}=    Get Order By CSV
+    OperatingSystem.Create Directory    ${DOWNLOAD_DIR}
+    Set Download Directory     ${DOWNLOAD_DIR}
+    OperatingSystem.Create Directory           ${CURDIR}${/}output${/}receipt
+    Open the robot order website
+    ${orders}=    Get Order By CSV
    
-    #FOR    ${row}   IN      @{orders}
-    #    Run Keyword And Continue On Failure    Process order    ${row}
-    #END
-    #Create a ZIP file of the receipts
-    #Remove Directory        ${DOWNLOAD_DIR}    recursive=True 
-    #[Teardown]    Log Out And Close The Browser
+    FOR    ${row}   IN      @{orders}
+        Run Keyword And Continue On Failure    Process order    ${row}
+    END
+    Create a ZIP file of the receipts
+    OperatingSystem.Remove Directory        ${DOWNLOAD_DIR}    recursive=True 
+    [Teardown]    Log Out And Close The Browser
 
+ 
