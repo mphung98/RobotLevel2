@@ -14,12 +14,11 @@ Library         RPA.Archive               # Zip file
 Library         RPA.Robocloud.Secrets
 Library         Dialogs
 Library         RPA.FileSystem
-
+Variables       variables.py
 Suite Setup     Open the robot website
 
 *** Variables ***
 ${DOWNLOAD_DIR}     ${CURDIR}${/}Download
-${URL}              https://robotsparebinindustries.com
 ${RSBInc}           xpath=//a[@class="nav-link"]                     #https://robotsparebinindustries.com/#/robot-order
 ${CSVFile}          https://robotsparebinindustries.com/orders.csv
 ${ButtonOK}         xpath=//div[@class="alert-buttons"]/button[@class="btn btn-dark"]
@@ -42,9 +41,9 @@ ${logout}           xpath=//button[@id="logout"]
 *** Keywords ***
 Open the robot website
     [Documentation]    Open Website and try to use Vault file.
-    Open Available Browser          ${URL} 
+     ${secret}=    Get Secret    credentials
+    Open Available Browser          ${secret}[url]
     Set Selenium Implicit Wait      1       #wait page load completed
-    ${secret}=    Get Secret    credentials
     Input Text            id:username    ${secret}[username]
     Input Password        id:password    ${secret}[password]
     Submit Form
@@ -67,8 +66,8 @@ Get Order By CSV
  Read CSV 
      ${orders}=          Read table from CSV         ${DOWNLOAD_DIR}${/}orders.csv
      [Return]            ${orders}
-        
-    
+
+
 Close the annoying modal
     [Documentation]    If the modal dialog is open then closed it.
     ${isDialogVisible}=       Run Keyword And Return Status     Element Should Be Visible   ${Dialog}      
